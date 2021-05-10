@@ -16,7 +16,7 @@ import {
     Select
 } from '@material-ui/core';
 
-axios.defaults.baseURL = "http://" + location.hostname + ":4000";
+axios.defaults.baseURL = "http://" + location.hostname + "/node";
 
 const useStyles = makeStyles((theme) => ({
     formControl: {

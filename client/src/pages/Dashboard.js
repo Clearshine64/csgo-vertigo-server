@@ -18,7 +18,7 @@ import MatchState from 'src/components/dashboard/MatchState';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 // import response from './response';
 
-var HOST = "ws://" + location.hostname + ":4000/socket/browser"
+var HOST = "ws://" + location.hostname + "/ws/socket/browser"
 
 var ws = new WebSocket(HOST);
 

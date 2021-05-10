@@ -15,7 +15,7 @@ import AddClientDialog from 'src/components/customs/AddClientDialog'
 import EventEmitter from 'reactjs-eventemitter';
 import axios from 'axios';
 
-axios.defaults.baseURL = "http://" + location.hostname + ":4000";
+axios.defaults.baseURL = "http://" + location.hostname + "/node";
 
 let setFlagtemp;
 let flagtemp;

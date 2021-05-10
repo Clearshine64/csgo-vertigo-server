@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const url = "http://" + location.hostname + ":4000"
+const url = "http://" + location.hostname + "/node"
 
 const axiosIns = axios.create({
     baseURL: url,

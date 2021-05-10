@@ -15,7 +15,7 @@ import EditClientDialog from 'src/components/customs/EditClientDialog'
 import EventEmitter from 'reactjs-eventemitter';
 import axios from 'axios';
 
-axios.defaults.baseURL = "http://" + location.hostname + ":4000";
+axios.defaults.baseURL = "http://" + location.hostname + "/node";
 
 const ClientCard = ({
   client,

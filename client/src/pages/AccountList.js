@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 // import accounts from '../__mocks__/customers'
 import EventEmitter from 'reactjs-eventemitter';
 
-axios.defaults.baseURL = "http://" + location.hostname + ":4000";
+axios.defaults.baseURL = "http://" + location.hostname + "/node";
 
 let setFlagtemp;
 let flagtemp;

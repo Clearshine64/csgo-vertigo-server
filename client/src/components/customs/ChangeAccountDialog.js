@@ -12,7 +12,7 @@ import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
 import axios from 'axios';
 
-axios.defaults.baseURL = "http://" + location.hostname + ":4000";
+axios.defaults.baseURL = "http://" + location.hostname + "/node";
 
 export default function ChangeAccountDialog({ account, ...props}) {
   const [open, setOpen] = React.useState(false);

@@ -23,7 +23,7 @@ import {
   } from '@material-ui/core';
 import AccountDetails from 'src/components/customs/AccountDetails'
 
-axios.defaults.baseURL = "http://" + location.hostname + ":4000";
+axios.defaults.baseURL = "http://" + location.hostname + "/node";
 
 const useStyles = makeStyles((theme) => ({
     formControl: {

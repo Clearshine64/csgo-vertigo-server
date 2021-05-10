@@ -21,7 +21,7 @@ import axios from 'axios';
 import ChangeAccountDialog from '../customs/ChangeAccountDialog'
 import EventEmitter from 'reactjs-eventemitter';
 
-axios.defaults.baseURL = "http://" + location.hostname + ":4000";
+axios.defaults.baseURL = "http://" + location.hostname + "/node";
 
 const AccountListResults = ({ accounts, ...rest }) => {
   const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);

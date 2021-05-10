@@ -14,7 +14,7 @@ import GroupListResults from 'src/components/group/GroupListResults';
 import { makeStyles } from '@material-ui/core/styles';
 import axios from 'axios';
 
-axios.defaults.baseURL = "http://" + location.hostname + ":4000";
+axios.defaults.baseURL = "http://" + location.hostname + "/node";
 
 const useStyles = makeStyles((theme) => ({
   formControl: {

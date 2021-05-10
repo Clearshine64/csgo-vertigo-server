@@ -9,7 +9,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import EventEmitter from 'reactjs-eventemitter';
 import axios from 'axios';
 
-axios.defaults.baseURL = "http://" + location.hostname + ":4000";
+axios.defaults.baseURL = "http://" + location.hostname + "/node";
 
 export default function AddAccountDialog(props) {
   const [open, setOpen] = React.useState(false);
