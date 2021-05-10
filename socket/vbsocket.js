@@ -43,7 +43,7 @@ setInterval(async () => {
           if (vbclient.pingcount == disconnectTime) {
             vbclient.isAlive = false;
           }
-          await vbclient.ping(() => {});
+          await vbclient.ping(() => { });
         }
       }
 
@@ -56,29 +56,11 @@ setInterval(async () => {
 }, timeinterval);
 
 //check client's connection for first time, whether it is registered or not.
-const FirstConnectionCheck = async (ws) => {
+const FirstConnectionCheck = async (ws, ipv4) => {
   try {
-    if (!await ClientLib.isRegistered(ws.ipv4)) {
-      console.log(messages.notregistered);
-      ws.send(messages.notregistered);
-      ws.terminate();
-    } else {
-      console.log(messages.registered);
-      ws.send(messages.registered);
-    }
-  } catch (err) {
-
-  }
-}
-
-//when socket connection is established
-const websocketfunction = async (ws, req) => {
-  try {
-
-    let reg = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/; //for ipv4
+    //let reg = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/; //for ipv4
     ws.isAlive = true;
-    ipv4 = req.socket.remoteAddress.toString().match(reg);
-    ws.ipv4 = ipv4[0];
+    ws.ipv4 = ipv4;
 
     if (blacklist.indexOf(ws.ipv4) != -1) {
       console.log(ws.ipv4 + " is in blacklist");
@@ -100,13 +82,28 @@ const websocketfunction = async (ws, req) => {
     }
 
     if (!flag)
+    {
       vbconnects.push(ws);
 
-    // console.log(vbconnects);
+      // console.log(vbconnects);
+      if (!await ClientLib.isRegistered(ws.ipv4)) {
+        console.log(messages.notregistered);
+        ws.send(messages.notregistered);
+        ws.terminate();
+      } else {
+        console.log(messages.registered);
+        ws.send(messages.registered);
+      }
+    }
+
   } catch (err) {
     console.log(err);
   }
 
+}
+
+//when socket connection is established
+const websocketfunction = async (ws, req) => {
   //poin if from alive client and send client's information
   const onPongAction = async (vbclient) => {
     try {
@@ -132,9 +129,11 @@ const websocketfunction = async (ws, req) => {
 
   const onMessageAction = async (ws, message) => {
     try {
-      switch (message) {
-        case "New connection to webserver":
-          await FirstConnectionCheck(ws);
+      let jsonMsg = JSON.parse(message)
+
+      switch (jsonMsg.action) {
+        case "register":
+          await FirstConnectionCheck(ws, jsonMsg.ipv4);
           return;
         default:
           break;

@@ -19,6 +19,7 @@ const SteamLib = require('./lib/steamlib');
 app.set('port', process.env.PORT || 4000);
 
 //for test page to determine whether socket is working
+app.use('/', serveStatic(`${__dirname}/public`));
 app.use('/socket/browser', serveStatic(`${__dirname}/public`));
 app.use('/socket/vbclient', serveStatic(`${__dirname}/public`));
 
@@ -57,7 +58,7 @@ app.ws('/socket/vbclient', require('./socket/vbsocket').websocketfunction);
 
 async function main() {
   await SteamLib.initial();
-  app.listen(app.get('port'), () => {
+  app.listen(app.get('port'), 'localhost', () => {
     console.log('Server listening on port %s', app.get('port'));
   });
 }
