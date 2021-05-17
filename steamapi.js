@@ -8,6 +8,8 @@ const SteamLib = require('./lib/steamlib');
 
 /* config */
 let timeinterval = 10000;
+let leveledTime = 1000 * 60 * 60 * 24 * 7;
+
 let timeflag = false;
 let global_config = {};
 
@@ -56,7 +58,7 @@ const logfunc = (data) => {
 }
 
 //get profile of specific user using steamapi
-const getProfile = async (username, password) => {
+const getProfile = async (mode, username, password) => {
 
     let myPromise = new Promise((myResolve, myReject) => {
         let user = new SteamUser();
@@ -128,7 +130,6 @@ const getProfile = async (username, password) => {
                     }
 
                     profile.ranking = ranking;
-
                     myResolve(profile);
                 });
             };
@@ -140,7 +141,7 @@ const getProfile = async (username, password) => {
                 logfunc("no connection to SteamServer");
                 myResolve("no connection to SteamServer");
             }
-        }, timeinterval * 3); // if no connection for 15s, determine not connected to server
+        }, timeinterval * 36); // if no connection for 360s, determine not connected to server
     });
 
     let profile = await myPromise;
@@ -177,51 +178,93 @@ const getProfile = async (username, password) => {
      player_xp_bonus_flags: null
    }
 */
+const filtering = async (mode, accounts, isInitial) => {
+    try {
+        let count = 0;
+        for (let account of accounts) {
+            if (count < 5) {
+                if (process.env.NODE_ENV == 'test') {
+                    await SteamLib.setStatusFlagAndDesc(account._id, "useful", "useful");
+                }
+                else {
+                    //get profile using steam api
+                    let profile = await getProfile(mode, account.username, account.password);
+                    if (isInitial) {
+                        switch (mode) {
+                            case "openrank":
+                                break;
+
+                            case "onlylose":
+                                profile.losed = 0;
+                                break;
+
+                            case "level":
+                                profile.leveled = 0;
+                                break;
+                        }
+                    } else {
+                        console.log("notprocessed");
+                        let profile_after = await SteamLib.getProfileAfter(account._id);
+                        console.log(profile_after);
+                        switch (mode) {
+                            case "openrank":
+                                break;
+
+                            case "onlylose":
+                                profile.losed = profile_after.losed || 0;
+                                break;
+
+                            case "level":
+                                profile.leveled = profile_after.leveled || 0;
+                                break;
+                        }                        
+                    }
+
+                    //console.log(profile);
+                    //error manipulation
+                    if (typeof profile == "string") {
+                        //now profile is error string
+                        await SteamLib.setStatusFlagAndDesc(account._id, "notuseful", profile);
+                    } else {
+                        if (isInitial) {
+                            await SteamLib.setProfileBefore(account._id, profile);
+                            await SteamLib.setProfileAfter(account._id, profile);
+                        } else {
+                            await SteamLib.setProfileAfter(account._id, profile);
+                        }
+
+                        //filtering accounts with penalty and vac and level 1
+                        if (profile.penalty_seconds != null) await SteamLib.setStatusFlagAndDesc(account._id, "notprocessed", "penalty");
+                        else if (profile.penalty_reason != null) await SteamLib.setStatusFlagAndDesc(account._id, "notprocessed", "penalty");
+                        else if (profile.vac_banned != null) await SteamLib.setStatusFlagAndDesc(account._id, "notuseful", "vac_banned");
+                        else if (profile.player_level <= 1) await SteamLib.setStatusFlagAndDesc(account._id, "notuseful", "level 1 account");
+                        else {
+                            await SteamLib.setStatusFlagAndDesc(account._id, "useful", "useful");
+                        }
+                    }
+                }
+                count++;
+            }
+        }
+    } catch (err) {
+        console.log(err);
+    }
+}
 
 //filtering accounts whether they are useful
 const filteringAndGrouping = async () => {
     try {
         let modes = ["openrank", "onlylose", "level"];
-
         for (let mode of modes) {
             //filtering process
             // logfunc(mode + " mode filtering is started")
             let accounts = await SteamLib.getAccountsForFlag(mode, "initial");
-
+            let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
             // logfunc("avaialable accounts number " + accounts.length);
             //loop at least 5 accounts
-            let count = 0;
-            for (let account of accounts) {
-                if (count < 5) {
-                    if (process.env.NODE_ENV == 'test') {
-                        await SteamLib.setStatusFlagAndDesc(account._id, "useful", "useful");
-                    }
-                    else {
-                        //get profile using steam api
-                        let profile = await getProfile(account.username, account.password);
+            await filtering(mode, accounts, true);
 
-                        //console.log(profile);
-                        //error manipulation
-                        if (typeof profile == "string") {
-                            //now profile is error string
-                            await SteamLib.setStatusFlagAndDesc(account._id, "notuseful", profile);
-                        } else {
-                            await SteamLib.setProfileBefore(account._id, profile);
-                            await SteamLib.setProfileAfter(account._id, profile);
-
-                            //filtering accounts with penalty and vac and level 1
-                            if (profile.penalty_seconds != null) await SteamLib.setStatusFlagAndDesc(account._id, "notuseful", "penalty");
-                            else if (profile.penalty_reason != null) await SteamLib.setStatusFlagAndDesc(account._id, "notuseful", "penalty");
-                            else if (profile.vac_banned != null) await SteamLib.setStatusFlagAndDesc(account._id, "notuseful", "vac_banned");
-                            else if (profile.player_level <= 1) await SteamLib.setStatusFlagAndDesc(account._id, "notuseful", "level 1 account");
-                            else {
-                                await SteamLib.setStatusFlagAndDesc(account._id, "useful", "useful");
-                            }
-                        }
-                    }
-                    count++;
-                }
-            }
+            await filtering(mode, notProAccounts, false);
 
             //grouping process - in this process initial accounts' flag are updated to grouped
             // logfunc(mode + " : grouping is started");
@@ -236,6 +279,7 @@ const filteringAndGrouping = async () => {
             await SteamLib.defragment(mode);
         }
     } catch (err) {
+        console.log(err);
         // logfunction(err);
     }
 }
@@ -255,3 +299,18 @@ setInterval(async () => {
         // logfunc(err)
     }
 }, timeinterval);
+
+//there is no end in level mode, start again within one week
+setInterval(async () => {
+    try {
+        let mode = "level";
+        let accounts = await SteamLib.getAccountsForFlag(mode, "processed");
+
+        for (let account of accounts) {
+            await SteamLib.setStatusFlagAndDesc(account._id, "initial", "initial");
+        }
+    } catch (err) {
+        console.log(err);
+    }
+
+}, leveledTime)

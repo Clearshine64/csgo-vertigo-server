@@ -6,7 +6,7 @@
   "scripts": {
     "client-install": "cd client && npm install",
     "start": "node server.js",
-    "server": "concurrently \"set NODE_ENV=competitive&& nodemon server.js && node steamapi.js\" \" set NODE_ENV=competitive&& node steamapi.js\"",
+    "server": "concurrently \"set NODE_ENV=competitive&& nodemon server.js\" \" set NODE_ENV=competitive&& node steamapi.js\"",
     "client": "npm start --prefix client",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "test": "concurrently \"npm run server\" \"npm run client\""

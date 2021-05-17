@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Card,
+  Checkbox,
   CardContent,
   Container,
   Divider,
@@ -32,6 +33,7 @@ const useStyles = makeStyles((theme) => ({
 
 const MatchList = () => {
   const classes = useStyles();
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
   const [ orInfo, setOrInfo ] = useState([]);
   const [ olInfo, setOlInfo ] = useState([]);
   const [ lInfo, setLInfo ] = useState([]);
@@ -47,10 +49,29 @@ const MatchList = () => {
   const [ olCondition, setOlCondition ] = useState();
   const [ lCondition, setLCondition ] = useState();
 
+  const handleSelectOne = (event, item) => {
+    const selectedIndex = selectedCustomerIds.indexOf(item);
+    let newSelectedCustomerIds = [];
+
+    if (selectedIndex === -1) {
+      newSelectedCustomerIds = newSelectedCustomerIds.concat(selectedCustomerIds, item);
+    } else if (selectedIndex === 0) {
+      newSelectedCustomerIds = newSelectedCustomerIds.concat(selectedCustomerIds.slice(1));
+    } else if (selectedIndex === selectedCustomerIds.length - 1) {
+      newSelectedCustomerIds = newSelectedCustomerIds.concat(selectedCustomerIds.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelectedCustomerIds = newSelectedCustomerIds.concat(
+        selectedCustomerIds.slice(0, selectedIndex),
+        selectedCustomerIds.slice(selectedIndex + 1)
+      );
+    }
+    setSelectedCustomerIds(newSelectedCustomerIds);
+  };
+
   // When click start button, send request for save data (map, condition)
   const handleOrStart = async () => {
     await axios.put('/api/match/matchmode/openrank', {
-      map: orMap,
+      map: [orMap],
       condition: 0
     });
     await axios.put('/api/match/play/openrank', {
@@ -62,7 +83,7 @@ const MatchList = () => {
   };
   const handleOlStart = async () => {
     await axios.put('/api/match/matchmode/onlylose', {
-      map: olMap,
+      map: selectedCustomerIds,
       condition: olCondition
     });
     await axios.put('/api/match/play/onlylose', {
@@ -75,7 +96,7 @@ const MatchList = () => {
   const handleLStart = async () => {
     
     await axios.put('/api/match/matchmode/level', {
-      map: lMap,
+      map: [lMap],
       condition: lCondition
     });    
     await axios.put('/api/match/play/level', {
@@ -102,7 +123,7 @@ const MatchList = () => {
     });
     await axios.get('/api/match/matchmode/onlylose').then((data)=>{
       setOlInfo(data.data.match);
-      setOlMap(data.data.match.matchInfo.map)
+      setSelectedCustomerIds(data.data.match.matchInfo.map)
       setOlCondition(data.data.match.matchInfo.condition)
     });
     await axios.get('/api/match/matchmode/level').then((data)=>{
@@ -244,26 +265,35 @@ const MatchList = () => {
                 </CardContent>
                 <Divider />
                 <CardContent>
+                <Grid
+                    container
+                    spacing={2}
+                  >
+                    {olInfo.maps != undefined ? olInfo.maps.map((item) => (
+                      <Grid
+                        item
+                        lg={4}
+                        sm={6}
+                        xl={4}
+                        xs={12}
+                      >
+                        <Checkbox
+                          checked={selectedCustomerIds.indexOf(item) !== -1}
+                          onChange={(event) => handleSelectOne(event, item)}
+                          value="true"
+                        />
+                        <span>{item}</span>
+                      </Grid>
+                    )) : null
+                    }
+                  </Grid>
+                  <Divider />
                   <Box sx={{ 
                     display: 'flex',
                     justifyContent: 'center',
-                    pb: 1 }}
+                    pb: 3 }}
                   >
-                    <FormControl fullwidth variant="outlined" className={classes.formControl}>
-                      <InputLabel id="demo-simple-select-outlined-label">Map</InputLabel>
-                      <Select
-                      labelId="demo-simple-select-outlined-label"
-                      id="demo-simple-select-outlined"
-                      value={olMap}
-                      onChange={(e) => setOlMap(e.target.value)}
-                      label="Map"
-                      >
-                        {olInfo.maps != undefined ? olInfo.maps.map((item) => (
-                          <MenuItem value={item}>{item}</MenuItem>
-                        )) : null}
-                      </Select>
-                    </FormControl>
-                    <Button style={{marginLeft: '5%'}} variant="outlined" color="primary" onClick={handleOlStart}>
+                    <Button style={{marginTop: '2%'}} variant="outlined" color="primary" onClick={handleOlStart}>
                       {olStartFlag == false ? 'start' : 'stop'}
                     </Button>
                   </Box>

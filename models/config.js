@@ -8,15 +8,15 @@ const configSchema = new mongoose.Schema({
   }],
   matchmode: {    //match config
     openrank: {
-      map: String,
+      map: Array,
       condition: Number
     },
     onlylose: {
-      map: String,
+      map: Array,
       condition: Number
     },
     level: {
-      map: String,
+      map: Array,
       condition: Number
     }
     
