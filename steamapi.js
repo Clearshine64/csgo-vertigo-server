@@ -224,7 +224,7 @@ const filtering = async (mode, accounts, isInitial) => {
                     //error manipulation
                     if (typeof profile == "string") {
                         //now profile is error string
-                        await SteamLib.setStatusFlagAndDesc(account._id, "notuseful", profile);
+                        await SteamLib.setStatusFlagAndDesc(account._id, "notprocessed", profile);
                     } else {
                         if (isInitial) {
                             await SteamLib.setProfileBefore(account._id, profile);

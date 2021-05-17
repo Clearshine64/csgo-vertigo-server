@@ -119,7 +119,7 @@ const MatchList = () => {
     });
     await axios.get('/api/match/matchmode/openrank').then((data)=>{
       setOrInfo(data.data.match);
-      setOrMap(data.data.match.matchInfo.map)
+      setOrMap(data.data.match.matchInfo.map[0])
     });
     await axios.get('/api/match/matchmode/onlylose').then((data)=>{
       setOlInfo(data.data.match);
@@ -128,7 +128,7 @@ const MatchList = () => {
     });
     await axios.get('/api/match/matchmode/level').then((data)=>{
       setLInfo(data.data.match);
-      setLMap(data.data.match.matchInfo.map)
+      setLMap(data.data.match.matchInfo.map[0])
       setLCondition(data.data.match.matchInfo.condition)
     });
   },[]);
