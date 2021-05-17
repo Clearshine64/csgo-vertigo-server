@@ -205,7 +205,7 @@ const filtering = async (mode, accounts, isInitial) => {
                     } else {
                         console.log("notprocessed");
                         let profile_after = await SteamLib.getProfileAfter(account._id);
-                        console.log(profile_after);
+                        //console.log(profile_after);
                         switch (mode) {
                             case "openrank":
                                 break;
@@ -242,8 +242,8 @@ const filtering = async (mode, accounts, isInitial) => {
                             await SteamLib.setStatusFlagAndDesc(account._id, "useful", "useful");
                         }
                     }
+                    count++;
                 }
-                count++;
             }
         }
     } catch (err) {
@@ -259,24 +259,26 @@ const filteringAndGrouping = async () => {
             //filtering process
             // logfunc(mode + " mode filtering is started")
             let accounts = await SteamLib.getAccountsForFlag(mode, "initial");
-            let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
             // logfunc("avaialable accounts number " + accounts.length);
             //loop at least 5 accounts
             await filtering(mode, accounts, true);
-
-            await filtering(mode, notProAccounts, false);
-
+            
+            
             //grouping process - in this process initial accounts' flag are updated to grouped
             // logfunc(mode + " : grouping is started");
             await SteamLib.formGroup(mode);
-
+            
             //update client's information according to matchmode
             // logfunc(mode + " : assigning is started");
             await SteamLib.assignGroupToClients(mode);
-
+            
             //check grouped accounts that doesn't belong to any useful clients and 
             // logfunc(mode + " : defragment in grouped accounts is statared");
             await SteamLib.defragment(mode);
+            
+            //filtering notprocessed
+            let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
+            await filtering(mode, notProAccounts, false);
         }
     } catch (err) {
         console.log(err);
