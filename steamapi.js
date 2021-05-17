@@ -188,44 +188,47 @@ const filtering = async (mode, accounts, isInitial) => {
                 }
                 else {
                     //get profile using steam api
-                    let profile = await getProfile( account.username, account.password);
-                    if (isInitial) {
-                        switch (mode) {
-                            case "openrank":
-                                break;
-
-                            case "onlylose":
-                                profile.losed = 0;
-                                break;
-
-                            case "level":
-                                profile.leveled = 0;
-                                break;
-                        }
-                    } else {
-                        console.log("notprocessed");
-                        let profile_after = await SteamLib.getProfileAfter(account._id);
-                        //console.log(profile_after);
-                        switch (mode) {
-                            case "openrank":
-                                break;
-
-                            case "onlylose":
-                                profile.losed = profile_after.losed || 0;
-                                break;
-
-                            case "level":
-                                profile.leveled = profile_after.leveled || 0;
-                                break;
-                        }                        
-                    }
+                    let profile = await getProfile(account.username, account.password);
 
                     //console.log(profile);
                     //error manipulation
                     if (typeof profile == "string") {
-                        //now profile is error string
-                        await SteamLib.setStatusFlagAndDesc(account._id, "notprocessed", profile);
+                        if (profile == "InvalidPassword")
+                            await SteamLib.setStatusFlagAndDesc(account._id, "notuseful", profile);
+                        else
+                            await SteamLib.setStatusFlagAndDesc(account._id, "notprocessed", profile);
                     } else {
+                        if (isInitial) {
+                            switch (mode) {
+                                case "openrank":
+                                    break;
+
+                                case "onlylose":
+                                    profile.losed = 0;
+                                    break;
+
+                                case "level":
+                                    profile.leveled = 0;
+                                    break;
+                            }
+                        } else {
+                            console.log("notprocessed");
+                            let profile_after = await SteamLib.getProfileAfter(account._id);
+                            //console.log(profile_after);
+                            switch (mode) {
+                                case "openrank":
+                                    break;
+
+                                case "onlylose":
+                                    profile.losed = profile_after.losed || 0;
+                                    break;
+
+                                case "level":
+                                    profile.leveled = profile_after.leveled || 0;
+                                    break;
+                            }
+                        }
+
                         if (isInitial) {
                             await SteamLib.setProfileBefore(account._id, profile);
                             await SteamLib.setProfileAfter(account._id, profile);
@@ -262,22 +265,21 @@ const filteringAndGrouping = async () => {
             // logfunc("avaialable accounts number " + accounts.length);
             //loop at least 5 accounts
             await filtering(mode, accounts, true);
-            
-            
+
+
             //grouping process - in this process initial accounts' flag are updated to grouped
             // logfunc(mode + " : grouping is started");
             await SteamLib.formGroup(mode);
-            
+
             //update client's information according to matchmode
             // logfunc(mode + " : assigning is started");
             await SteamLib.assignGroupToClients(mode);
-            
+
             //check grouped accounts that doesn't belong to any useful clients and 
             // logfunc(mode + " : defragment in grouped accounts is statared");
             await SteamLib.defragment(mode);
-            
-            if(accounts.length == 0)
-            {
+
+            if (accounts.length == 0) {
                 //filtering notprocessed
                 let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
                 await filtering(mode, notProAccounts, false);
