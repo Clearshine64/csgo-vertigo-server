@@ -27,10 +27,10 @@ const accountSchema = new mongoose.Schema({
     trim: true
   },
   profile_before: {       //profile status before match
-    type: Map
+    type: Object
   },
   profile_after: {        //profile status after all
-    type: Map
+    type: Object
   }
 });
 

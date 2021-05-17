@@ -58,7 +58,7 @@ const logfunc = (data) => {
 }
 
 //get profile of specific user using steamapi
-const getProfile = async (mode, username, password) => {
+const getProfile = async (username, password) => {
 
     let myPromise = new Promise((myResolve, myReject) => {
         let user = new SteamUser();
@@ -188,7 +188,7 @@ const filtering = async (mode, accounts, isInitial) => {
                 }
                 else {
                     //get profile using steam api
-                    let profile = await getProfile(mode, account.username, account.password);
+                    let profile = await getProfile( account.username, account.password);
                     if (isInitial) {
                         switch (mode) {
                             case "openrank":
@@ -276,9 +276,12 @@ const filteringAndGrouping = async () => {
             // logfunc(mode + " : defragment in grouped accounts is statared");
             await SteamLib.defragment(mode);
             
-            //filtering notprocessed
-            let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
-            await filtering(mode, notProAccounts, false);
+            if(accounts.length == 0)
+            {
+                //filtering notprocessed
+                let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
+                await filtering(mode, notProAccounts, false);
+            }
         }
     } catch (err) {
         console.log(err);
