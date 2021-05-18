@@ -181,8 +181,10 @@ const getProfile = async (username, password) => {
 const filtering = async (mode, accounts, isInitial) => {
     try {
         let count = 0;
+        let limit = 5;
+        if(isInitial == false) limit = 10;
         for (let account of accounts) {
-            if (count < 5) {
+            if (count < limit) {
                 if (process.env.NODE_ENV == 'test') {
                     await SteamLib.setStatusFlagAndDesc(account._id, "useful", "useful");
                 }
@@ -254,11 +256,15 @@ const filtering = async (mode, accounts, isInitial) => {
     }
 }
 
-let nCount = 0;
+let timeNotProcessed = 0;
+let timeNotProcessedLimit = 15;
 //filtering accounts whether they are useful
 const filteringAndGrouping = async () => {
     try {
         let modes = ["openrank", "onlylose", "level"];
+        
+        timeNotProcessed ++;
+
         for (let mode of modes) {
             //filtering process
             // logfunc(mode + " mode filtering is started")
@@ -279,13 +285,17 @@ const filteringAndGrouping = async () => {
             //check grouped accounts that doesn't belong to any useful clients and 
             // logfunc(mode + " : defragment in grouped accounts is statared");
             await SteamLib.defragment(mode);
-            nCount ++ ;
-            if (accounts.length == 0 && nCount >= 6 * 30) {
+            
+            if (accounts.length == 0 && timeNotProcessed > timeNotProcessedLimit) {
                 //filtering notprocessed
                 let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
                 await filtering(mode, notProAccounts, false);
-                nCount = 0;
             }
+        }
+
+        if(timeNotProcessed > timeNotProcessedLimit)
+        {
+            timeNotProcessed = 0;
         }
     } catch (err) {
         console.log(err);
@@ -314,7 +324,7 @@ setInterval(async () => {
     try {
         let mode = "level";
         let accounts = await SteamLib.getAccountsForFlag(mode, "processed");
-
+        console.log("======leveled processed start======");
         for (let account of accounts) {
             await SteamLib.setStatusFlagAndDesc(account._id, "initial", "initial");
         }
