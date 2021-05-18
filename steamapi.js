@@ -257,7 +257,7 @@ const filtering = async (mode, accounts, isInitial) => {
 }
 
 let timeNotProcessed = 0;
-let timeNotProcessedLimit = 15;
+let timeNotProcessedLimit = 2;
 //filtering accounts whether they are useful
 const filteringAndGrouping = async () => {
     try {
