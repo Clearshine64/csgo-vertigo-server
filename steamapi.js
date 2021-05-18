@@ -254,6 +254,7 @@ const filtering = async (mode, accounts, isInitial) => {
     }
 }
 
+let nCount = 0;
 //filtering accounts whether they are useful
 const filteringAndGrouping = async () => {
     try {
@@ -278,11 +279,12 @@ const filteringAndGrouping = async () => {
             //check grouped accounts that doesn't belong to any useful clients and 
             // logfunc(mode + " : defragment in grouped accounts is statared");
             await SteamLib.defragment(mode);
-
-            if (accounts.length == 0) {
+            nCount ++ ;
+            if (accounts.length == 0 && nCount >= 6 * 30) {
                 //filtering notprocessed
                 let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
                 await filtering(mode, notProAccounts, false);
+                nCount = 0;
             }
         }
     } catch (err) {
@@ -319,5 +321,4 @@ setInterval(async () => {
     } catch (err) {
         console.log(err);
     }
-
 }, leveledTime)
