@@ -9,6 +9,7 @@ const SteamLib = require('./lib/steamlib');
 /* config */
 let timeinterval = 10000;
 let leveledTime = 1000 * 60 * 60 * 24 * 7;
+let PenaltiedTime = 1000 * 60 * 20;
 
 let timeflag = false;
 let global_config = {};
@@ -141,7 +142,7 @@ const getProfile = async (username, password) => {
                 logfunc("no connection to SteamServer");
                 myResolve("no connection to SteamServer");
             }
-        }, timeinterval * 36); // if no connection for 360s, determine not connected to server
+        }, timeinterval * 6); // if no connection for 60s, determine not connected to server
     });
 
     let profile = await myPromise;
@@ -178,11 +179,10 @@ const getProfile = async (username, password) => {
      player_xp_bonus_flags: null
    }
 */
-const filtering = async (mode, accounts, isInitial) => {
+const filtering = async (mode, accounts) => {
     try {
         let count = 0;
         let limit = 5;
-        if(isInitial == false) limit = 10;
         for (let account of accounts) {
             if (count < limit) {
                 if (process.env.NODE_ENV == 'test') {
@@ -200,43 +200,23 @@ const filtering = async (mode, accounts, isInitial) => {
                         else
                             await SteamLib.setStatusFlagAndDesc(account._id, "notprocessed", profile);
                     } else {
-                        if (isInitial) {
-                            switch (mode) {
-                                case "openrank":
-                                    break;
+                        let profile_after = await SteamLib.getProfileAfter(account._id);
+                        //console.log(profile_after);
+                        switch (mode) {
+                            case "openrank":
+                                break;
 
-                                case "onlylose":
-                                    profile.losed = 0;
-                                    break;
+                            case "onlylose":
+                                profile.losed = profile_after.losed || 0;
+                                break;
 
-                                case "level":
-                                    profile.leveled = 0;
-                                    break;
-                            }
-                        } else {
-                            console.log("notprocessed");
-                            let profile_after = await SteamLib.getProfileAfter(account._id);
-                            //console.log(profile_after);
-                            switch (mode) {
-                                case "openrank":
-                                    break;
-
-                                case "onlylose":
-                                    profile.losed = profile_after.losed || 0;
-                                    break;
-
-                                case "level":
-                                    profile.leveled = profile_after.leveled || 0;
-                                    break;
-                            }
+                            case "level":
+                                profile.leveled = profile_after.leveled || 0;
+                                break;
                         }
 
-                        if (isInitial) {
-                            await SteamLib.setProfileBefore(account._id, profile);
-                            await SteamLib.setProfileAfter(account._id, profile);
-                        } else {
-                            await SteamLib.setProfileAfter(account._id, profile);
-                        }
+                        await SteamLib.setProfileBefore(account._id, profile);
+                        await SteamLib.setProfileAfter(account._id, profile);
 
                         //filtering accounts with penalty and vac and level 1
                         if (profile.penalty_seconds != null) await SteamLib.setStatusFlagAndDesc(account._id, "notprocessed", "penalty");
@@ -256,14 +236,10 @@ const filtering = async (mode, accounts, isInitial) => {
     }
 }
 
-let timeNotProcessed = 0;
-let timeNotProcessedLimit = 1;
 //filtering accounts whether they are useful
 const filteringAndGrouping = async () => {
     try {
         let modes = ["openrank", "onlylose", "level"];
-        
-        timeNotProcessed ++;
 
         for (let mode of modes) {
             //filtering process
@@ -271,7 +247,7 @@ const filteringAndGrouping = async () => {
             let accounts = await SteamLib.getAccountsForFlag(mode, "initial");
             // logfunc("avaialable accounts number " + accounts.length);
             //loop at least 5 accounts
-            await filtering(mode, accounts, true);
+            await filtering(mode, accounts);
 
 
             //grouping process - in this process initial accounts' flag are updated to grouped
@@ -285,17 +261,6 @@ const filteringAndGrouping = async () => {
             //check grouped accounts that doesn't belong to any useful clients and 
             // logfunc(mode + " : defragment in grouped accounts is statared");
             await SteamLib.defragment(mode);
-            
-            if (accounts.length == 0 && timeNotProcessed > timeNotProcessedLimit) {
-                //filtering notprocessed
-                let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
-                await filtering(mode, notProAccounts, false);
-            }
-        }
-
-        if(timeNotProcessed > timeNotProcessedLimit)
-        {
-            timeNotProcessed = 0;
         }
     } catch (err) {
         console.log(err);
@@ -332,3 +297,19 @@ setInterval(async () => {
         console.log(err);
     }
 }, leveledTime)
+
+setInterval(async () => {
+    try {
+        let modes = ["openrank", "onlylose", "level"];
+
+        for (let mode of modes) {
+                //change flag to initial
+                let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
+                for (let account of notProAccounts) {
+                    await SteamLib.setStatusFlagAndDesc(account._id, "initial", "initial");
+                }
+        }
+    } catch (err) {
+        console.log(err);
+    }
+}, PenaltiedTime);
