@@ -5,6 +5,8 @@ const GlobalOffensive = require('globaloffensive');
 var SteamID = require('steamid');
 
 const SteamLib = require('./lib/steamlib');
+const ConfigLib = require('./lib/configlib');
+const { profile } = require('console');
 
 /* config */
 let timeinterval = 10000;
@@ -121,12 +123,12 @@ const getProfile = async (username, password) => {
                     let ranking = { rank_id: 0, wins: 0, rank_type_id: global_config.rank_type_id };
 
                     for (let ran of data.rankings) {
-                        if (ran.rank_type_id && ran.rank_type_id == global_config.rank_type_id) {
+                        if (ran.rank_type_id == global_config.rank_type_id) {
                             ranking = ran;
                         }
                     }
 
-                    if (data && data.ranking && data.ranking.rank_type_id && data.ranking.rank_type_id == global_config.rank_type_id) {
+                    if (data && data.ranking && data.ranking.rank_type_id == global_config.rank_type_id) {
                         ranking = data.ranking;
                     }
 
@@ -142,7 +144,7 @@ const getProfile = async (username, password) => {
                 logfunc("no connection to SteamServer");
                 myResolve("no connection to SteamServer");
             }
-        }, timeinterval * 6); // if no connection for 60s, determine not connected to server
+        }, timeinterval * 12); // if no connection for 120s, determine not connected to server
     });
 
     let profile = await myPromise;
@@ -179,6 +181,64 @@ const getProfile = async (username, password) => {
      player_xp_bonus_flags: null
    }
 */
+
+//check again and set info
+const settingProcessedInfo = async (mode, accounts) => {
+    try {
+        for (let account of accounts) {
+            if (process.env.NODE_ENV == 'test') {
+                console.log("test processed");
+            }
+            else {
+                let profile_after = await SteamLib.getProfileAfter(account._id);
+                if (profile_after && (profile_after.getInfo == 0 || profile_after.getInfo == null)) {
+                    console.log("checking for processed account");
+                    let profile = await getProfile(account.username, account.password);
+                    let flag = 0;
+
+                    //check again
+                    switch (mode) {
+                        case "openrank":
+                            {
+                                let profile_before = await SteamLib.getProfileBefore(account._id);
+                                if (profile_after.ranking.rank_id > profile_before.ranking.rank_id)
+                                    flag = 1;
+                            }
+                            break;
+                        case "onlylose":
+                            {
+                                let losed = profile_after.losed || 0;
+                                let condition = await ConfigLib.getMatchInfo(mode);
+                                if (losed >= condition.condition)
+                                    flag = 1;
+                            }
+                            break;
+                        case "level":
+                            {
+                                let leveled = profile_after.leveled || 0;
+                                let condition = await ConfigLib.getMatchInfo(mode);
+                                if (leveled >= condition.condition)
+                                    flag = 1;
+                            }
+                            break;
+                    }
+
+                    if (flag == 0) {
+                        console.log("wrong processed");
+                        await SteamLib.setStatusFlagAndDesc(account._id, "notprocessed", "wrong processed");
+                    }
+                    else {
+                        profile.getInfo = flag;
+                        await SteamLib.setProfileAfter(account._id, profile);
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.log(err);
+    }
+}
+
 const filtering = async (mode, accounts) => {
     try {
         let count = 0;
@@ -261,6 +321,10 @@ const filteringAndGrouping = async () => {
             //check grouped accounts that doesn't belong to any useful clients and 
             // logfunc(mode + " : defragment in grouped accounts is statared");
             await SteamLib.defragment(mode);
+
+            //check again processed accounts whether they are fulfilled
+            let processedAccounts = await SteamLib.getAccountsForFlag(mode, "processed");
+            await settingProcessedInfo(mode, processedAccounts);
         }
     } catch (err) {
         console.log(err);
@@ -303,11 +367,11 @@ setInterval(async () => {
         let modes = ["openrank", "onlylose", "level"];
 
         for (let mode of modes) {
-                //change flag to initial
-                let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
-                for (let account of notProAccounts) {
-                    await SteamLib.setStatusFlagAndDesc(account._id, "initial", "initial");
-                }
+            //change flag to initial
+            let notProAccounts = await SteamLib.getAccountsForFlag(mode, "notprocessed");
+            for (let account of notProAccounts) {
+                await SteamLib.setStatusFlagAndDesc(account._id, "initial", "initial");
+            }
         }
     } catch (err) {
         console.log(err);
