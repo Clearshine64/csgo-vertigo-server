@@ -196,47 +196,52 @@ const settingProcessedInfo = async (mode, accounts) => {
                     let profile = await getProfile(account.username, account.password);
                     let flag = 0;
 
-                    //check again
-                    console.log("checking real processed member");
-                    switch (mode) {
-                        case "openrank":
-                            {
-                                let profile_before = await SteamLib.getProfileBefore(account._id);
-                                console.log("profile_before " + profile_before.ranking.rank_id);
-                                console.log("level profile_after"+profile_after.ranking.rank_id);
-                                if (profile_after.ranking.rank_id > profile_before.ranking.rank_id)
-                                    flag = 1;
-                            }
-                            break;
-                        case "onlylose":
-                            {
-                                let losed = profile_after.losed || 0;
-                                let condition = await ConfigLib.getMatchInfo(mode);
-                                console.log("onlylose " + losed);
-                                console.log("onlylose condition"+condition.condition);
-                                if (losed >= condition.condition)
-                                    flag = 1;
-                            }
-                            break;
-                        case "level":
-                            {
-                                let leveled = profile_after.leveled || 0;
-                                let condition = await ConfigLib.getMatchInfo(mode);
-                                console.log("leveled " + leveled);
-                                console.log("level condition"+condition.condition);
-                                if (leveled >= condition.condition)
-                                    flag = 1;
-                            }
-                            break;
-                    }
+                    if (typeof profile == "string") {
+                        if (profile == "InvalidPassword")
+                            await SteamLib.setStatusFlagAndDesc(account._id, "notuseful", profile);
+                    } else {
+                        //check again
+                        console.log("checking real processed member");
+                        switch (mode) {
+                            case "openrank":
+                                {
+                                    let profile_before = await SteamLib.getProfileBefore(account._id);
+                                    console.log("profile_before " + profile_before.ranking.rank_id);
+                                    console.log("level profile_after" + profile_after.ranking.rank_id);
+                                    if (profile_after.ranking.rank_id > profile_before.ranking.rank_id)
+                                        flag = 1;
+                                }
+                                break;
+                            case "onlylose":
+                                {
+                                    let losed = profile_after.losed || 0;
+                                    let condition = await ConfigLib.getMatchInfo(mode);
+                                    console.log("onlylose " + losed);
+                                    console.log("onlylose condition" + condition.condition);
+                                    if (losed >= condition.condition)
+                                        flag = 1;
+                                }
+                                break;
+                            case "level":
+                                {
+                                    let leveled = profile_after.leveled || 0;
+                                    let condition = await ConfigLib.getMatchInfo(mode);
+                                    console.log("leveled " + leveled);
+                                    console.log("level condition" + condition.condition);
+                                    if (leveled >= condition.condition)
+                                        flag = 1;
+                                }
+                                break;
+                        }
 
-                    if (flag == 0) {
-                        console.log("wrong processed");
-                        await SteamLib.setStatusFlagAndDesc(account._id, "notprocessed", "wrong processed");
-                    }
-                    else {
-                        profile.getInfo = flag;
-                        await SteamLib.setProfileAfter(account._id, profile);
+                        if (flag == 0) {
+                            console.log("wrong processed");
+                            await SteamLib.setStatusFlagAndDesc(account._id, "notprocessed", "wrong processed");
+                        }
+                        else {
+                            profile.getInfo = flag;
+                            await SteamLib.setProfileAfter(account._id, profile);
+                        }
                     }
                 }
             }
