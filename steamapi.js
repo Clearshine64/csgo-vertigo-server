@@ -240,6 +240,7 @@ const settingProcessedInfo = async (mode, accounts) => {
                         }
                         else {
                             profile.getInfo = flag;
+                            console.log(profile);
                             await SteamLib.setProfileAfter(account._id, profile);
                         }
                     }
