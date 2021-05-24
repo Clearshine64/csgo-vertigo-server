@@ -192,7 +192,7 @@ const settingProcessedInfo = async (mode, accounts) => {
             else {
                 let profile_after = await SteamLib.getProfileAfter(account._id);
                 if (profile_after && (profile_after.getInfo == 0 || profile_after.getInfo == null)) {
-                    console.log("checking for processed account");
+                    console.log("====================checking for processed account====================");
                     let profile = await getProfile(account.username, account.password);
                     let flag = 0;
 
@@ -239,6 +239,7 @@ const settingProcessedInfo = async (mode, accounts) => {
                             await SteamLib.setStatusFlagAndDesc(account._id, "notprocessed", "wrong processed");
                         }
                         else {
+                            console.log("---perfect processed---");
                             profile.getInfo = flag;
                             console.log(profile);
                             await SteamLib.setProfileAfter(account._id, profile);

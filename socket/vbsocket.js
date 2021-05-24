@@ -12,8 +12,8 @@ const messages = {
 }
 
 /* config */
-let timeinterval = 5000;
-let disconnectTime = 50; // 5000 * 50 = 250s
+let timeinterval = 10000;
+let disconnectTime = 50; // 10000 * 50 = 500s
 
 let timeflag = false;
 
