@@ -149,12 +149,12 @@ const getProfile = async (username, password) => {
 
     try{
         let profile = await myPromise;
+        return profile;
     }
     catch(err)
     {
 
     }
-    return profile;
 }
 
 /*{
