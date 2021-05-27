@@ -147,7 +147,13 @@ const getProfile = async (username, password) => {
         }, timeinterval * 12); // if no connection for 120s, determine not connected to server
     });
 
-    let profile = await myPromise;
+    try{
+        let profile = await myPromise;
+    }
+    catch(err)
+    {
+
+    }
     return profile;
 }
 
@@ -249,7 +255,7 @@ const settingProcessedInfo = async (mode, accounts) => {
             }
         }
     } catch (err) {
-        console.log(err);
+        //console.log(err);
     }
 }
 
@@ -306,7 +312,7 @@ const filtering = async (mode, accounts) => {
             }
         }
     } catch (err) {
-        console.log(err);
+        //console.log(err);
     }
 }
 
@@ -341,7 +347,7 @@ const filteringAndGrouping = async () => {
             await settingProcessedInfo(mode, processedAccounts);
         }
     } catch (err) {
-        console.log(err);
+        //console.log(err);
         // logfunction(err);
     }
 }
@@ -372,7 +378,7 @@ setInterval(async () => {
             await SteamLib.setStatusFlagAndDesc(account._id, "initial", "initial");
         }
     } catch (err) {
-        console.log(err);
+        //console.log(err);
     }
 }, leveledTime)
 
@@ -388,6 +394,6 @@ setInterval(async () => {
             }
         }
     } catch (err) {
-        console.log(err);
+        //console.log(err);
     }
 }, PenaltiedTime);
